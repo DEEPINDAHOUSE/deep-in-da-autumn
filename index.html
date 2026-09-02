@@ -126,6 +126,7 @@
   }
   .tab svg{width:18px;height:18px;stroke:var(--faint);transition:stroke .25s ease;}
   .tab.active{color:var(--orange);}
+  .tab.locked{opacity:.32; pointer-events:none;}
   .tab.active svg{stroke:var(--orange);}
   .tab.active::after{
     content:"";
@@ -577,10 +578,7 @@
   .modal-check-label{font-size:14px; color:var(--ink);}
 
   .fee-row{
-    display:flex;
-    align-items:baseline;
-    justify-content:space-between;
-    margin-bottom:16px;
+    margin-bottom:6px;
   }
   .fee-amount{font-weight:800; font-size:28px; letter-spacing:-0.01em;}
   .fee-sub{
@@ -589,7 +587,7 @@
     letter-spacing:0.06em;
     color:var(--green);
     text-transform:uppercase;
-    text-align:right;
+    margin-bottom:16px;
   }
 
   .account-box{
@@ -691,7 +689,6 @@
 
       <div class="content-pad">
         <div class="headline">Deep in<span class="script">da autumn</span></div>
-        <p class="subline">A night for going deeper into the music together.</p>
 
         <div class="card">
           <div class="card-head">
@@ -709,11 +706,7 @@
           </div>
 
           <div id="home-form-wrap">
-            <div class="field">
-              <label class="field-label">이름</label>
-              <input id="home-name" type="text" placeholder="" maxlength="24">
-            </div>
-            <button class="btn" id="going-btn">
+            <button class="btn" id="going-btn" style="margin-top:20px;">
               <span>I AM GOING</span>
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#171310" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             </button>
@@ -725,8 +718,6 @@
             </div>
           </div>
         </div>
-
-        <div class="footnote" id="going-count">— IN THE ROOM SO FAR —</div>
       </div>
     </section>
 
@@ -735,14 +726,10 @@
       <div class="content-pad">
         <div class="section-eyebrow">Register</div>
         <div class="signal-head" style="font-size:28px;">참가 등록</div>
-        <p class="roll-intro">이름을 적고 네임택 질문을 골라주세요.</p>
+        <p class="roll-intro">네임택에 쓰일 질문을 하나 골라주세요.</p>
 
         <div class="divider"></div>
 
-        <div class="field" style="margin-top:0;">
-          <label class="field-label">이름</label>
-          <input id="register-name" type="text" placeholder="네임택에 표시될 이름" maxlength="20">
-        </div>
 
         <div class="tag-preview" id="tag-preview">
           <div class="tag-preview-label">네임택에 이렇게 기록됩니다</div>
@@ -834,8 +821,8 @@
       <div class="modal-block-label">Admission</div>
       <div class="fee-row">
         <div class="fee-amount">₩30,000</div>
-        <div class="fee-sub">Two free<br>drinks included</div>
       </div>
+      <div class="fee-sub">Two free drinks included</div>
       <div class="account-box">
         <div class="account-info">
           <div class="account-bank">하나은행</div>
@@ -863,17 +850,12 @@
 
     <div class="modal-block">
       <div class="modal-block-label">Photo</div>
-      <p class="modal-text">이 밤 동안 사진이나 영상으로 촬영될 수 있어요.</p>
+      <p class="modal-text">행사 중 사진 및 영상 촬영이 진행될 수 있으며, 촬영된 사진 및 영상은 행사 참가자에 한하여 공유될 예정입니다.</p>
       <label class="modal-check">
         <input type="checkbox" id="consent-photo">
         <span class="modal-check-box"></span>
         <span class="modal-check-label">동의합니다</span>
       </label>
-    </div>
-
-    <div class="modal-block">
-      <div class="modal-block-label">Why we're here</div>
-      <p class="modal-text">낯선 얼굴들이 한 공간에 모여, 좋은 음악 하나로 가까워지는 밤을 만들고 싶어요. Deep in da Autumn은 그 첫 시작이에요.</p>
     </div>
 
     <button class="btn" id="modal-confirm-btn" disabled>
@@ -926,30 +908,21 @@
     window.scrollTo(0, 0);
   }
 
+  function lockOtherTabs(exceptTarget){
+    tabs.forEach(t => t.classList.toggle('locked', t.dataset.target !== exceptTarget));
+  }
+  function unlockAllTabs(){
+    tabs.forEach(t => t.classList.remove('locked'));
+  }
+
   tabs.forEach(tab => {
     tab.addEventListener('click', () => activateTab(tab.dataset.target));
   });
 
   /* ---------- HOME: RSVP ---------- */
   const goingBtn = $('going-btn');
-  const homeNameInput = $('home-name');
   const homeFormWrap = $('home-form-wrap');
   const homeConfirmed = $('home-confirmed');
-  const goingCountEl = $('going-count');
-
-  if(firebaseReady){
-    db.collection('going').onSnapshot((snap) => {
-      const n = snap.size;
-      goingCountEl.textContent = n > 0
-        ? `— ${n} IN THE ROOM SO FAR —`
-        : '— BE THE FIRST TO GO —';
-    }, (err) => {
-      console.error(err);
-      goingCountEl.textContent = '— COULD NOT LOAD —';
-    });
-  }else{
-    goingCountEl.textContent = '— BE THE FIRST TO GO —';
-  }
 
   /* ---- notice modal ---- */
   const modalBackdrop = $('modal-backdrop');
@@ -971,12 +944,6 @@
     document.body.style.overflow = '';
   }
 
-  function getName(){
-    const name = homeNameInput.value.trim();
-    if(!name){ homeNameInput.focus(); toast('이름을 입력해주세요'); return null; }
-    return name;
-  }
-
   function getModalInfo(){
     const realname = modalRealnameInput.value.trim();
     const phone = modalPhoneInput.value.trim();
@@ -986,7 +953,6 @@
   }
 
   goingBtn.addEventListener('click', () => {
-    if(!getName()) return;
     openModal();
   });
 
@@ -1034,8 +1000,6 @@
   });
 
   modalConfirmBtn.addEventListener('click', async () => {
-    const name = getName();
-    if(!name){ closeModal(); return; }
     const modalInfo = getModalInfo();
     if(!modalInfo) return;
     if(!(consentPhoto.checked && consentPayment.checked)) return;
@@ -1044,8 +1008,7 @@
     modalConfirmBtn.disabled = true;
     try{
       await db.collection('going').add({
-        name,
-        realname: modalInfo.realname,
+        name: modalInfo.realname,
         phone: modalInfo.phone,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
@@ -1060,15 +1023,14 @@
     closeModal();
     homeFormWrap.style.display = 'none';
     homeConfirmed.style.display = 'block';
-    $('going-confirm-text').textContent = `${name}, you're on the list.`;
-    toast('참석 완료! 🌙 네임택도 등록해주세요');
+    $('going-confirm-text').textContent = `${modalInfo.realname}, you're on the list.`;
+    toast('참석 완료! 🌙 마지막으로 네임택 질문만 골라주세요');
 
-    // prefill and jump straight to REGISTER tab
-    if(registerNameInput && !registerNameInput.value.trim()){
-      registerNameInput.value = name;
-    }
+    // hand the verified name straight to REGISTER — no need to type it again
+    verifiedRealName = modalInfo.realname;
     if(typeof updateTagPreview === 'function') updateTagPreview();
     activateTab('register');
+    lockOtherTabs('register');
   });
 
   /* ---------- SIGNAL ---------- */
@@ -1125,8 +1087,8 @@
     toast('신호를 보냈어요 ✦');
   });
 
-  /* ---------- REGISTER (nametag: name + one question) ---------- */
-  const registerNameInput = $('register-name');
+  /* ---------- REGISTER (nametag: reuses the verified name, just picks a question) ---------- */
+  let verifiedRealName = '';
   const qchipButtons = document.querySelectorAll('.qchip');
   const tagPreviewName = $('tag-preview-name');
   const tagPreviewQ = $('tag-preview-q');
@@ -1137,12 +1099,9 @@
   let selectedQuestion = null;
 
   function updateTagPreview(){
-    const name = registerNameInput.value.trim();
-    tagPreviewName.textContent = name || '이름';
+    tagPreviewName.textContent = verifiedRealName || '이름';
     tagPreviewQ.textContent = selectedQuestion || '질문을 골라주세요';
   }
-
-  registerNameInput.addEventListener('input', updateTagPreview);
 
   qchipButtons.forEach(chip => {
     chip.addEventListener('click', () => {
@@ -1154,15 +1113,14 @@
   });
 
   registerBtn.addEventListener('click', async () => {
-    const name = registerNameInput.value.trim();
-    if(!name){ registerNameInput.focus(); toast('이름을 입력해주세요'); return; }
+    if(!verifiedRealName){ toast('먼저 HOME에서 I AM GOING으로 참석 등록을 해주세요'); return; }
     if(!selectedQuestion){ toast('네임택 질문을 하나 골라주세요'); return; }
     if(!firebaseReady){ firebaseNotReadyToast(); return; }
 
     registerBtn.disabled = true;
     try{
       await db.collection('register').add({
-        name,
+        name: verifiedRealName,
         question: selectedQuestion,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
@@ -1176,8 +1134,9 @@
 
     registerFormWrap.style.display = 'none';
     registerConfirmed.style.display = 'block';
-    $('register-confirm-text').textContent = `${name}, 네임택 등록 완료.`;
+    $('register-confirm-text').textContent = `${verifiedRealName}, 네임택 등록 완료.`;
     toast('네임택이 등록됐어요 🏷️');
+    unlockAllTabs();
   });
 
 })();
