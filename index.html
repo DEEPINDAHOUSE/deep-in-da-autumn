@@ -701,7 +701,7 @@
             <div class="kv"><div class="kv-k">DJ</div><div class="kv-v">jazzzking</div></div>
           </div>
           <div class="kv-row">
-            <div class="kv"><div class="kv-k">PLACE</div><div class="kv-v">파브릭 Fabrikseoul 2층</div></div>
+            <div class="kv"><div class="kv-k">PLACE</div><div class="kv-v">파브릭 Fabrikseoul<br>2층</div></div>
             <div class="kv"><div class="kv-k">DOORS</div><div class="kv-v">18:15 → 22:30</div></div>
           </div>
 
@@ -1007,11 +1007,12 @@
 
     modalConfirmBtn.disabled = true;
     try{
-      await db.collection('going').add({
+      const docRef = await db.collection('going').add({
         name: modalInfo.realname,
         phone: modalInfo.phone,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
+      verifiedGoingDocRef = docRef;
     }catch(e){
       console.error(e);
       modalConfirmBtn.disabled = false;
@@ -1089,6 +1090,7 @@
 
   /* ---------- REGISTER (nametag: reuses the verified name, just picks a question) ---------- */
   let verifiedRealName = '';
+  let verifiedGoingDocRef = null;
   const qchipButtons = document.querySelectorAll('.qchip');
   const tagPreviewName = $('tag-preview-name');
   const tagPreviewQ = $('tag-preview-q');
@@ -1113,16 +1115,15 @@
   });
 
   registerBtn.addEventListener('click', async () => {
-    if(!verifiedRealName){ toast('먼저 HOME에서 I AM GOING으로 참석 등록을 해주세요'); return; }
+    if(!verifiedRealName || !verifiedGoingDocRef){ toast('먼저 HOME에서 I AM GOING으로 참석 등록을 해주세요'); return; }
     if(!selectedQuestion){ toast('네임택 질문을 하나 골라주세요'); return; }
     if(!firebaseReady){ firebaseNotReadyToast(); return; }
 
     registerBtn.disabled = true;
     try{
-      await db.collection('register').add({
-        name: verifiedRealName,
+      await verifiedGoingDocRef.update({
         question: selectedQuestion,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        registeredAt: firebase.firestore.FieldValue.serverTimestamp()
       });
     }catch(e){
       console.error(e);
